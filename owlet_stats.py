@@ -28,14 +28,15 @@ class Owlet(object):
             'HEART_RATE',
         ]
 
-        self.auth_token = ''
-        self.expire_time = 0
+        self._auth_token = None
+        self._expire_time = 0
         self.last_time = ''
 
         self.email = email
         self.password = password
 
-    def login(self):
+    def _login(self):
+        '''Generate a new auth token.'''
         login_url = 'https://user.aylanetworks.com:443/users/sign_in.json'
         login_payload = {
           "user": {
@@ -48,36 +49,53 @@ class Owlet(object):
           }
         }
 
-        # print (auth_token, expire_time, time.time())
-        if (self.auth_token == '') or (self.expire_time <= time.time()):
-            logger.debug('Generating token')
-            data = requests.post(
-                login_url,
-                json=login_payload,
-                headers=self.headers
-            )
+        logger.debug('Generating token')
+        data = requests.post(
+            login_url,
+            json=login_payload,
+            headers=self.headers
+        )
 
-            # Example response:
-            # {
-            #    u'access_token': u'abcdefghijklmnopqrstuvwxyz123456',
-            #    u'role': u'EndUser',
-            #    u'expires_in': 86400,
-            #    u'refresh_token': u'123456abcdefghijklmnopqrstuvwxyz',
-            #    u'role_tags': []
-            # }
+        # Example response:
+        # {
+        #    u'access_token': u'abcdefghijklmnopqrstuvwxyz123456',
+        #    u'role': u'EndUser',
+        #    u'expires_in': 86400,
+        #    u'refresh_token': u'123456abcdefghijklmnopqrstuvwxyz',
+        #    u'role_tags': []
+        # }
 
-            json_data = data.json()
-            self.auth_token = json_data['access_token']
-            self.expire_time = time.time() + json_data['expires_in']
-            logger.debug('Auth Token: %s', self.auth_token)
+        json_data = data.json()
+
+        # update our auth token
+        self._auth_token = json_data['access_token']
+
+        # update our auth expiration time
+        self._expire_time = time.time() + json_data['expires_in']
+
+        logger.debug('Auth Token: %s expires at %s', self._auth_token, self._expire_time)
+
+    def get_auth_token(self):
+        '''
+        Get the auth token.
+
+        If the current token has not expired, return that.
+        Otherwise login and get a new token and return that token.
+        '''
+
+        # if the auth token doesnt exist or has expired, login to get a new one
+        if (self._auth_token is None) or (self._expire_time <= time.time()):
+            logger.debug('Auth Token expired, need to get a new one')
+            self._login()
+
+        return self._auth_token
 
     def get_data(self):
         while True:
-            self.login()
             time.sleep(1)
 
             self.auth_header = {
-                'Authorization': 'auth_token ' + self.auth_token
+                'Authorization': 'auth_token ' + self.get_auth_token()
             }
             self.auth_header.update(self.headers)
 
