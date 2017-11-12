@@ -52,6 +52,16 @@ class Owlet(object):
                 json=login_payload,
                 headers=self.headers
             )
+
+            # Example response:
+            # {
+            #    u'access_token': u'abcdefghijklmnopqrstuvwxyz123456',
+            #    u'role': u'EndUser',
+            #    u'expires_in': 86400,
+            #    u'refresh_token': u'123456abcdefghijklmnopqrstuvwxyz',
+            #    u'role_tags': []
+            # }
+
             self.auth_token = data.json()['access_token']
             self.expire_time = time.time() + 3600
             print (self.auth_token)
