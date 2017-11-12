@@ -3,8 +3,12 @@
 import time
 
 import requests
-
+import logging
 __author__ = 'fgorodishter'
+
+logging.basicConfig()
+logger = logging.getLogger('owlet')
+logger.setLevel(logging.DEBUG)
 
 
 class Owlet(object):
@@ -46,7 +50,7 @@ class Owlet(object):
 
         # print (auth_token, expire_time, time.time())
         if (self.auth_token == '') or (self.expire_time <= time.time()):
-            print ('Generating token')
+            logger.debug('Generating token')
             data = requests.post(
                 login_url,
                 json=login_payload,
@@ -65,7 +69,7 @@ class Owlet(object):
             json_data = data.json()
             self.auth_token = json_data['access_token']
             self.expire_time = time.time() + json_data['expires_in']
-            print (self.auth_token)
+            logger.debug('Auth Token: %s', self.auth_token)
 
     def get_data(self):
         while True:
@@ -86,9 +90,9 @@ class Owlet(object):
                 # print(data, data.text, data.headers)
                 data_json = data.json()
                 if data_json['property']['data_updated_at'] == self.last_time:
-                    print('.')
+                    logger.debug('.')
                 else:
-                    print (
+                    logger.debug(
                         measure,
                         data_json['property']['value'],
                         data_json['property']['data_updated_at']
