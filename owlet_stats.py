@@ -9,7 +9,7 @@ __author__ = 'fgorodishter'
 
 class Owlet(object):
 
-    def __init__(self):
+    def __init__(self, email, password):
         self.headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -28,12 +28,15 @@ class Owlet(object):
         self.expire_time = 0
         self.last_time = ''
 
+        self.email = email
+        self.password = password
+
     def login(self):
         login_url = 'https://user.aylanetworks.com:443/users/sign_in.json'
         login_payload = {
           "user": {
-            "email": "EMAIL",
-            "password": "PASS",
+            "email": self.email,
+            "password": self.password,
             "application": {
               "app_id": "OWL-id",
               "app_secret": "OWL-4163742"
@@ -99,5 +102,15 @@ class Owlet(object):
 
 
 if __name__ == "__main__":
-    o = Owlet()
+    import sys
+
+    # get credentials from the commandline
+    # python owlet_status.py email password
+    email = sys.argv[1]
+    password = sys.argv[2]
+
+    o = Owlet(
+        email=email,
+        password=password
+    )
     o.get_data()
