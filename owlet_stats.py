@@ -126,9 +126,9 @@ class Owlet(object):
             output = {}
             for measure in self.properties:
                 url = properties_url + '/' + measure
-                data = self._auth_request(url)
-                data_json = data.json()
-                if data_json['property']['data_updated_at'] == last_time[measure]:
+                response = self._auth_request(url)
+                data = response.json()['property']
+                if data['data_updated_at'] == last_time[measure]:
                     # increase the delay so we don't hammer their api
                     # keep doubling the delay each time the measurements don't update
                     # up to a maximum of 5 minutes
@@ -145,20 +145,19 @@ class Owlet(object):
                 delay = 1
 
                 # save the data_updated_at time so we don't keep printing duplicate data
-                last_time[measure] = data_json['property']['data_updated_at']
+                last_time[measure] = data['data_updated_at']
 
                 logger.info(
                     "%s = %s @ %s",
                     measure,
-                    data_json['property']['value'],
-                    data_json['property']['data_updated_at']
+                    data['value'],
+                    data['data_updated_at']
                 )
-                output.update(
-                    {
-                        measure: data_json['property']['value'],
-                        'data_updated_at': data_json['property']['data_updated_at']
-                    }
-                )
+
+                # set the output value for this measure
+                output[measure] = data['value']
+                # update the updated at value
+                output['data_updated_at'] = data['data_updated_at']
 
             # log to es
             # requests.post(
