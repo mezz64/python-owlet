@@ -27,7 +27,6 @@ class Owlet(object):
 
         self._auth_token = None
         self._expire_time = 0
-        self.last_time = ''
 
         self.email = email
         self.password = password
@@ -115,39 +114,57 @@ class Owlet(object):
         # create the properties url with our dsn
         properties_url = 'https://ads-field.aylanetworks.com/apiv1/dsns/{}/properties'.format(dsn)
 
+        last_time = {p: 0 for p in self.properties}
+
+        delay = 1
+
         while True:
-            time.sleep(1)
+            time.sleep(delay)
 
             output = {}
             for measure in self.properties:
                 url = properties_url + '/' + measure
                 data = self._auth_request(url)
                 data_json = data.json()
-                if data_json['property']['data_updated_at'] == self.last_time:
-                    logger.debug('.')
-                else:
+                if data_json['property']['data_updated_at'] == last_time[measure]:
+                    # increase the delay so we don't hammer their api
+                    # keep doubling the delay each time the measurements don't update
+                    # up to a maximum of 5 minutes
+                    delay = min(delay * 2, 300)
                     logger.debug(
+                        'No update for %s since %s. Increasing delay to %s seconds',
                         measure,
-                        data_json['property']['value'],
-                        data_json['property']['data_updated_at']
+                        last_time[measure],
+                        delay
                     )
-                    output.update(
-                        {
-                            'measure': data_json['property']['value'],
-                            'data_updated_at': data_json['property']['data_updated_at']
-                        }
-                    )
+                    continue
+
+                # reset the delay to 1 second
+                delay = 1
+
+                # save the data_updated_at time so we don't keep printing duplicate data
+                last_time[measure] = data_json['property']['data_updated_at']
+
+                logger.info(
+                    "%s = %s @ %s",
+                    measure,
+                    data_json['property']['value'],
+                    data_json['property']['data_updated_at']
+                )
+                output.update(
+                    {
+                        measure: data_json['property']['value'],
+                        'data_updated_at': data_json['property']['data_updated_at']
+                    }
+                )
 
             # log to es
-            requests.post(
-                'http://ES_ADDRESS:9200/owlet/measure/' + output['data_updated_at'],
-                verify=False,
-                json=output,
-                headers=self.headers
-            )
-
-            # if we want to remove duplicate posts, uncomment and fix this
-            # last_time = data.json()['property']['data_updated_at']
+            # requests.post(
+            #    'http://ES_ADDRESS:9200/owlet/measure/' + output['data_updated_at'],
+            #    verify=False,
+            #    json=output,
+            #    headers=self.headers
+            # )
 
 
 if __name__ == "__main__":
