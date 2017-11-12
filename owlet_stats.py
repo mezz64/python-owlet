@@ -108,6 +108,8 @@ class Owlet(object):
     def get_data(self):
         '''Loop query for o2 and hr.'''
 
+        # FIXME: convert this to a generator
+
         # get the dsn for the device
         dsn = self.get_dsn()
 
@@ -165,6 +167,9 @@ class Owlet(object):
             #    json=output,
             #    headers=self.headers
             # )
+
+            if output:
+                print output
 
 
 if __name__ == "__main__":
