@@ -19,7 +19,6 @@ class Owlet(object):
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-        self.properties_url = 'https://ads-field.aylanetworks.com/apiv1/dsns/AC********/properties'
 
         self.properties = [
             'OXYGEN_LEVEL',
@@ -100,17 +99,29 @@ class Owlet(object):
         )
         return response
 
+    def get_dsn(self):
+        url = 'https://ads-field.aylanetworks.com/apiv1/devices.json'
+        data = self._auth_request(url)
+        json_data = data.json()
+        # FIXME: this is just returning the first device in the list
+        return json_data[0]['device']['dsn']
+
     def get_data(self):
+        '''Loop query for o2 and hr.'''
+
+        # get the dsn for the device
+        dsn = self.get_dsn()
+
+        # create the properties url with our dsn
+        properties_url = 'https://ads-field.aylanetworks.com/apiv1/dsns/{}/properties'.format(dsn)
+
         while True:
             time.sleep(1)
 
             output = {}
             for measure in self.properties:
-                url = self.properties_url + '/' + measure
+                url = properties_url + '/' + measure
                 data = self._auth_request(url)
-                # woo = dump.dump_all(data)
-                # print(woo.decode('utf-8'))
-                # print(data, data.text, data.headers)
                 data_json = data.json()
                 if data_json['property']['data_updated_at'] == self.last_time:
                     logger.debug('.')
