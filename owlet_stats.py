@@ -106,9 +106,16 @@ class Owlet(object):
         return json_data[0]['device']['dsn']
 
     def get_data(self):
-        '''Loop query for o2 and hr.'''
+        '''
+        Generator that returns a dict of o2 and hr.
 
-        # FIXME: convert this to a generator
+        Example:
+        {
+            'HEART_RATE': 151,
+            'OXYGEN_LEVEL': 100,
+            'data_updated_at': u'2017-11-12T19:10:08Z',
+        }
+        '''
 
         # get the dsn for the device
         dsn = self.get_dsn()
@@ -168,7 +175,7 @@ class Owlet(object):
             # )
 
             if output:
-                print output
+                yield output
 
 
 if __name__ == "__main__":
@@ -183,4 +190,5 @@ if __name__ == "__main__":
         email=email,
         password=password
     )
-    o.get_data()
+    for data in o.get_data():
+        print data
