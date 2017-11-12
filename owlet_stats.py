@@ -18,9 +18,6 @@ class Owlet(object):
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-        self.auth_header = {
-            'Authorization': 'auth_token ***'
-        }
         self.properties_url = 'https://ads-field.aylanetworks.com/apiv1/dsns/AC********/properties'
 
         self.properties = [
@@ -90,19 +87,26 @@ class Owlet(object):
 
         return self._auth_token
 
+    def _auth_request(self, url):
+        '''Make a get request using the auth_token headers.'''
+        auth_header = {
+            'Authorization': 'auth_token ' + self.get_auth_token()
+        }
+        auth_header.update(self.headers)
+        response = requests.get(
+            url,
+            headers=auth_header
+        )
+        return response
+
     def get_data(self):
         while True:
             time.sleep(1)
 
-            self.auth_header = {
-                'Authorization': 'auth_token ' + self.get_auth_token()
-            }
-            self.auth_header.update(self.headers)
-
             output = {}
             for measure in self.properties:
                 url = self.properties_url + '/' + measure
-                data = requests.get(url, headers=self.auth_header)
+                data = self._auth_request(url)
                 # woo = dump.dump_all(data)
                 # print(woo.decode('utf-8'))
                 # print(data, data.text, data.headers)
