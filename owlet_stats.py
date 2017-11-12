@@ -62,8 +62,9 @@ class Owlet(object):
             #    u'role_tags': []
             # }
 
-            self.auth_token = data.json()['access_token']
-            self.expire_time = time.time() + 3600
+            json_data = data.json()
+            self.auth_token = json_data['access_token']
+            self.expire_time = time.time() + json_data['expires_in']
             print (self.auth_token)
 
     def get_data(self):
