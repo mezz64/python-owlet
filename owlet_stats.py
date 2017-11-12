@@ -6,6 +6,7 @@ import requests
 import logging
 __author__ = 'fgorodishter'
 
+# configure logging
 logging.basicConfig()
 logger = logging.getLogger('owlet')
 logger.setLevel(logging.DEBUG)
